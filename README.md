@@ -22,3 +22,5 @@ A simple and practical CUDA parallel computing benchmark and performance analysi
  ```bash
  ./scripts/run_all.sh
 ```
+·
+
