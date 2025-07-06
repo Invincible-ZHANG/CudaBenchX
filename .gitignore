@@ -1,0 +1,34 @@
+# Ignore VS project config
+.vs/
+*.vcxproj*
+*.sln
+*.user
+*.filters
+
+# Ignore CMake build folder
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+build/
+out/
+out/build/
+*.dir/
+*.exe
+*.lib
+*.exp
+*.ilk
+*.pdb
+*.obj
+*.pch
+
+# Ignore logs and temp
+*.log
+*.tmp
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore benchmark results (optional)
+benchmark/results.csv
