@@ -129,7 +129,39 @@ Single Instruction, Multiple Threads
 
 ###  4. 网格配置（Grid + Block）
 
+```
+int blockSize = 256;
+int numBlocks = (N + blockSize - 1) / blockSize;
+vectorAdd<<<numBlocks, blockSize>>>(...);
+```
+ - <<<...>>> 是 CUDA 的核函数调用语法（不是函数括号，而是线程调度配置）
+ - numBlocks：需要多少个块  (N + blockSize - 1) / blockSize;保证所需的块数足够。
+ - blockSize：每个块内多少线程
+ - 总线程数 = numBlocks × blockSize ≥ N
 
+**每个线程独立执行一段任务，真正实现并行加速！**
+
+### 5. 内存管理：主机内存 vs 设备显存
+✅ 主机（Host）内存分配：
+```
+float* h_A = new float[N];
+```
+使用 C++ 标准 new[] 在主机（CPU）上分配空间。
+
+✅ 设备（GPU）内存分配：
+```
+cudaMalloc(&d_A, size);
+```
+cudaMalloc 是 CUDA 专用的显存分配函数。
+
+✅ 数据拷贝：
+```
+cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
+cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
+```
+通过 cudaMemcpy 完成 Host ↔ Device 的数据传输。
+
+---
 
 
 ## CUDA编程
@@ -174,5 +206,6 @@ CUDA是NVIDIA公司所开发的GPU编程模型，它提供了GPU编程的简易�
     <strong>图 3.</strong> CUDA 编程模型支持的编程语言
   </figcaption>
 </figure>
+
 
 
