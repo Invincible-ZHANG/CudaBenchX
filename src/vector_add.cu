@@ -27,6 +27,7 @@ __global__ void vectorAdd(const float* A, const float* B, float* C, int N) {
 
 int main() {
     int N = 1 << 20;                  // Vector length = 2^20 = 1,048,576
+    //How much video memory the GPU allocates
     size_t size = N * sizeof(float); // Total memory size in bytes
 
     // ========================================
@@ -38,7 +39,7 @@ int main() {
     float* h_B = new float[N];
     float* h_C = new float[N];
     for (int i = 0; i < N; ++i) {
-        h_A[i] = 1.0f;
+        h_A[i] = 1.0f; // Each element is set to 1.0
         h_B[i] = 2.0f;
     }
 
