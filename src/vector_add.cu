@@ -1,40 +1,51 @@
-// ========================================
-// ÎÄ¼þÃû£ºvector_add.cu
-// ×÷Õß£ºZijian Zhang
-// ÈÕÆÚ£º2025
-// ¹¦ÄÜ£ºÊ¹ÓÃ CUDA ²¢ÐÐÖ´ÐÐÏòÁ¿¼Ó·¨ C = A + B
-// ±àÒë·½·¨£¨ÔÚÖÕ¶ËÖ´ÐÐ£©£º
-//     nvcc -o vector_add src/vector_add.cu
-// ÔËÐÐ·½·¨£º
-//     ./vector_add
+ï»¿// ========================================
+// Filename : vector_add.cu
+// Author   : Zijian Zhang
+// Date     : 2025
+// Purpose  : Demonstrates CUDA parallel addition: C[i] = A[i] + B[i]
+// Compile  : nvcc -o vector_add src/vector_add.cu
+// Run      : ./vector_add
 // ========================================
 
 #include <iostream>
 #include <cuda_runtime.h>
 
 // ========================================
-// GPU ºËº¯Êý£ºÃ¿¸öÏß³Ì¼ÆËãÒ»¸ö C[i] = A[i] + B[i]
+// CUDA kernel: vectorAdd
+// Each thread computes one element of output vector C[i] = A[i] + B[i]
+//
+// Parameters:
+//   A - pointer to input vector A on device (GPU memory)
+//   B - pointer to input vector B on device
+//   C - pointer to output vector C on device
+//   N - total number of elements in vectors
 // ========================================
 __global__ void vectorAdd(const float* A, const float* B, float* C, int N) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x; // È«¾ÖÏß³ÌË÷Òý
-    if (i < N) C[i] = A[i] + B[i];                 // ¼ÆËãÃ¿¸öÔªËØ
+    int i = blockIdx.x * blockDim.x + threadIdx.x; // Global thread index
+    if (i < N) C[i] = A[i] + B[i];                 // Element-wise addition
 }
 
 int main() {
-    int N = 1 << 20; // ÏòÁ¿³¤¶ÈÎª 2^20 = 1048576
-    size_t size = N * sizeof(float); // ËùÓÐÊý×é´óÐ¡£¨×Ö½Ú£©
+    int N = 1 << 20;                  // Vector length = 2^20 = 1,048,576
+    size_t size = N * sizeof(float); // Total memory size in bytes
 
     // ========================================
-    // ·ÖÅä²¢³õÊ¼»¯Ö÷»ú¶ËÄÚ´æ£¨CPU ÉÏ£©
+    // Allocate and initialize host memory (CPU-side)
+    // h_A, h_B - input vectors on host
+    // h_C      - output vector on host
     // ========================================
-    float* h_A = new float[N], * h_B = new float[N], * h_C = new float[N];
+    float* h_A = new float[N];
+    float* h_B = new float[N];
+    float* h_C = new float[N];
     for (int i = 0; i < N; ++i) {
-        h_A[i] = 1.0f; // A È«²¿Îª 1.0
-        h_B[i] = 2.0f; // B È«²¿Îª 2.0
+        h_A[i] = 1.0f;
+        h_B[i] = 2.0f;
     }
 
     // ========================================
-    // ·ÖÅäÉè±¸¶ËÄÚ´æ£¨GPU ÉÏ£©
+    // Allocate device memory (GPU-side)
+    // d_A, d_B - input vectors on device
+    // d_C      - output vector on device
     // ========================================
     float* d_A, * d_B, * d_C;
     cudaMalloc(&d_A, size);
@@ -42,32 +53,38 @@ int main() {
     cudaMalloc(&d_C, size);
 
     // ========================================
-    // Êý¾Ý´Ó CPU ¿½±´µ½ GPU
+    // Copy data from host to device
+    // Copies h_A â†’ d_A and h_B â†’ d_B
     // ========================================
     cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
     cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
 
     // ========================================
-    // ÅäÖÃ CUDA kernel Íø¸ñºÍÏß³Ì¿é
+    // Configure kernel launch parameters
+    // blockSize  - number of threads per block
+    // numBlocks  - number of thread blocks
     // ========================================
-    int blockSize = 256; // Ã¿¸öÏß³Ì¿é 256 ¸öÏß³Ì
-    int numBlocks = (N + blockSize - 1) / blockSize; // ¹²ÐèÒªµÄÏß³Ì¿éÊý£¨ÏòÉÏÈ¡Õû£©
+    int blockSize = 256;
+    int numBlocks = (N + blockSize - 1) / blockSize;
 
     // ========================================
-    // Æô¶¯ CUDA ºËº¯Êý
+    // Launch CUDA kernel on GPU
+    // Launches 'numBlocks' blocks with 'blockSize' threads per block
+    // Each thread computes one element of C
     // ========================================
-    vectorAdd << <numBlocks, blockSize >> > (d_A, d_B, d_C, N);
+    vectorAdd<<<numBlocks, blockSize>>>(d_A, d_B, d_C, N);
 
     // ========================================
-    // ½«½á¹û´Ó GPU ¿½±´»Ø CPU
+    // Copy result vector back from device to host
+    // d_C â†’ h_C
     // ========================================
     cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
 
-    // ´òÓ¡µÚÒ»¸ö¼ÆËã½á¹û£ºÆÚÍûÖµ = 1.0 + 2.0 = 3.0
+    // Print the first result element (expected: 3.0)
     std::cout << "Result[0] = " << h_C[0] << std::endl;
 
     // ========================================
-    // ÊÍ·ÅÄÚ´æ×ÊÔ´
+    // Free allocated memory on both host and device
     // ========================================
     cudaFree(d_A); cudaFree(d_B); cudaFree(d_C);
     delete[] h_A; delete[] h_B; delete[] h_C;

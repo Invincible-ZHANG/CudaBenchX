@@ -81,7 +81,7 @@ scripts\build.bat
 | 🧠 支持 CUDA 的特殊关键字  | 如 `__global__`、`__device__`、`__shared__`、`cudaMalloc` 等 |
 
 
-## GPU 并行编程
+## 代码设计知识点
 ### 1.CUDA 基础结构：Host + Device 分工
 | 区域          | 含义          | 示例代码                             |
 | ----------- | ----------- | -------------------------------- |
@@ -110,8 +110,8 @@ int i = blockIdx.x * blockDim.x + threadIdx.x;
 ```
 vectorAdd<<<4, 256>>>(...);  // 4 个 block，每个 block 有 256 个线程
 ```
-blockIdx.x = 0~3（共有 4 个 block）
-threadIdx.x = 0~255（每个 block 有 256 个线程）
+blockIdx.x = 0 ~ 3（共有 4 个 block）
+threadIdx.x = 0 ~ 255（每个 block 有 256 个线程）
 
 
 ### 3. SIMT 模型 是什么？
@@ -130,6 +130,28 @@ Single Instruction, Multiple Threads
 ###  4. 网格配置（Grid + Block）
 
 
+
+
+## CUDA编程
+
+### 相关背景
+
+2006年，NVIDIA公司发布了CUDA，CUDA是建立在NVIDIA的CPUs上的一个通用并行计算平台和编程模型，基于CUDA编程可以利用GPUs的并行计算引擎来更加高效地解决比较复杂的计算难题。近年来，GPU最成功的一个应用就是深度学习领域，基于GPU的并行计算已经成为训练深度学习模型的标配。目前，最新的CUDA版本为CUDA 12。
+
+GPU并不是一个独立运行的计算平台，而需要与CPU协同工作，可以看成是CPU的协处理器，因此当我们在说GPU并行计算时，其实是指的基于CPU+GPU的异构计算架构。在异构计算架构中，GPU与CPU通过PCIe总线连接在一起来协同工作，CPU所在位置称为为主机端（host），而GPU所在位置称为设备端（device），如下图所示。
+
+<figure>
+  <img src="./images/基于CPU+GPU的异构计算.png" alt="基于CPU+GPU的异构计算" width="400">
+  <figcaption><strong>图 1.</strong> 基于CPU+GPU的异构计算. 来源：Preofessional CUDA® C Programming</figcaption>
+</figure>
+
+
+
+可以看到GPU包括更多的运算核心，其特别适合数据并行的计算密集型任务，如大型矩阵运算，而CPU的运算核心较少，但是其可以实现复杂的逻辑运算，因此其适合控制密集型任务。另外，CPU上的线程是重量级的，上下文切换开销大，但是GPU由于存在很多核心，其线程是轻量级的。因此，基于CPU+GPU的异构计算平台可以优势互补，CPU负责处理逻辑复杂的串行程序，而GPU重点处理数据密集型的并行计算程序，从而发挥最大功效。
+
+![](https://pic4.zhimg.com/v2-2959e07a36a8dc8f59280f53b43eb9d1_r.jpg)
+
+*基于CPU+GPU的异构计算应用执行逻辑. 来源：Preofessional CUDA® C Programming*
 
 
 
